@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Português Brasileiro</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: system-ui, sans-serif; margin: 0; background: #f4f7f2; color: #1d2b20; }
+  header { background: #009c3b; color: #fff; padding: 14px 16px; text-align: center; font-size: 20px; font-weight: 700; }
+  nav { display: flex; background: #ffdf00; }
+  nav button { flex: 1; padding: 12px 4px; border: 0; background: none; font-size: 14px; font-weight: 600; color: #1d2b20; cursor: pointer; }
+  nav button.active { background: #fff; border-bottom: 3px solid #002776; }
+  main { max-width: 560px; margin: 0 auto; padding: 16px; }
+  .card { background: #fff; border-radius: 14px; padding: 22px; box-shadow: 0 2px 8px rgba(0,0,0,.08); text-align: center; margin-bottom: 14px; }
+  .big { font-size: 28px; font-weight: 700; margin: 10px 0; }
+  .hint { color: #5a6b5e; font-size: 14px; }
+  button.act { padding: 12px 18px; margin: 6px 4px; border: 0; border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer; color: #fff; background: #002776; }
+  button.good { background: #009c3b; }
+  button.bad { background: #c0392b; }
+  .opt { display: block; width: 100%; margin: 8px 0; padding: 12px; border: 2px solid #d5ddd6; border-radius: 10px; background: #fff; font-size: 16px; cursor: pointer; text-align: left; }
+  .opt.right { border-color: #009c3b; background: #e6f6ea; }
+  .opt.wrong { border-color: #c0392b; background: #fbeae8; }
+  .slang { text-align: left; }
+  .slang b { font-size: 20px; }
+  .stat { font-size: 14px; color: #5a6b5e; text-align: center; margin-top: 8px; }
+</style>
+</head>
+<body>
+<header>🇧🇷 Português Brasileiro</header>
+<nav>
+  <button id="t-vocab" class="active" onclick="show('vocab')">Vokabeln</button>
+  <button id="t-gram" onclick="show('gram')">Grammatik</button>
+  <button id="t-slang" onclick="show('slang')">Slang</button>
+</nav>
+<main id="app"></main>
+
+<script>
+// ---------- DATEN ----------
+const VOCAB = [
+  ["oi","hallo"],["tchau","tschüss"],["bom dia","guten Morgen"],["boa tarde","guten Tag (nachmittags)"],
+  ["boa noite","guten Abend / gute Nacht"],["obrigado / obrigada","danke (m / w)"],["por favor","bitte"],
+  ["desculpa","Entschuldigung"],["sim","ja"],["não","nein / nicht"],["tudo bem?","alles gut?"],
+  ["eu","ich"],["você","du / Sie"],["a gente","wir (umgangssprachlich)"],["ele / ela","er / sie"],
+  ["água","Wasser"],["café","Kaffee"],["pão","Brot"],["comida","Essen"],["casa","Haus / Zuhause"],
+  ["trabalho","Arbeit"],["amigo / amiga","Freund / Freundin"],["família","Familie"],["dinheiro","Geld"],
+  ["hoje","heute"],["amanhã","morgen"],["ontem","gestern"],["agora","jetzt"],["depois","danach"],
+  ["um, dois, três","eins, zwei, drei"],["quatro, cinco, seis","vier, fünf, sechs"],
+  ["quanto custa?","was kostet das?"],["onde fica...?","wo ist...?"],["eu não entendo","ich verstehe nicht"],
+  ["pode repetir?","kannst du das wiederholen?"],["fala devagar, por favor","sprich bitte langsam"]
+];
+
+const GRAM = [
+  {q:"Wie sagt man „Ich bin müde“ (vorübergehender Zustand)?", o:["Eu sou cansado","Eu estou cansado","Eu tenho cansado"], a:1, e:"Für Zustände benutzt man „estar“, für dauerhafte Eigenschaften „ser“."},
+  {q:"Wie sagt man „Ich bin Deutscher“?", o:["Eu estou alemão","Eu sou alemão","Eu tenho alemão"], a:1, e:"Nationalität ist dauerhaft, also „ser“."},
+  {q:"Wähle die richtige Form: „Nós ___ no Brasil“ (wir wohnen)", o:["moro","mora","moramos"], a:2, e:"Endung -amos für „nós“. Im Alltag sagt man oft „a gente mora“."},
+  {q:"Welcher Artikel passt? „___ casa“ (das Haus)", o:["o","a","um"], a:1, e:"„casa“ ist weiblich, also „a casa“."},
+  {q:"Wie verneint man? „Eu falo português“ → ?", o:["Eu não falo português","Eu falo não português","Não eu falo português"], a:0, e:"„não“ steht direkt vor dem Verb."},
+  {q:"Wie sagt man „Ich habe Hunger“?", o:["Eu sou fome","Eu estou fome","Eu tenho fome"], a:2, e:"Hunger, Durst, Angst… all das wird mit „ter“ gebildet."},
+  {q:"Ich gehe morgen arbeiten (nahe Zukunft, wie im Alltag):", o:["Eu vou trabalhar amanhã","Eu vai trabalhar amanhã","Eu ir trabalhar amanhã"], a:0, e:"ir (vou) + Infinitiv ist die gängige Zukunftsform im gesprochenen Portugiesisch."},
+  {q:"Was bedeutet „Eu gosto de café“?", o:["Ich mache Kaffee","Ich mag Kaffee","Ich brauche Kaffee"], a:1, e:"„gostar de“ = mögen. Die Präposition „de“ nicht vergessen."},
+  {q:"Mehrzahl von „o livro“:", o:["os livros","os livro","as livros"], a:0, e:"Artikel und Nomen bekommen beide ein -s."},
+  {q:"Wie fragt man höflich nach dem Preis?", o:["Quanto é isso?","Quem é isso?","Onde é isso?"], a:0, e:"„quanto custa?“ oder „quanto é?“ funktionieren beide."}
+];
+
+const SLANG = [
+  ["e aí?","Was geht? / Na, wie läuft's?","E aí, tudo certo?"],
+  ["beleza","alles klar / cool","— Vamos amanhã? — Beleza!"],
+  ["tá ligado?","verstehst du? / weißt du?","É tipo assim, tá ligado?"],
+  ["valeu","danke / bis dann","Valeu pela ajuda!"],
+  ["tranquilo","entspannt / kein Problem","Fica tranquilo, eu resolvo."],
+  ["massa","geil / super (v.a. Nordosten)","Que massa essa ideia!"],
+  ["mano / cara","Alter / Kumpel","Cara, você não vai acreditar!"],
+  ["tô cansado","ich bin fertig (tô = estou)","Tô cansado demais hoje."],
+  ["pra caramba","unglaublich viel / sehr","Tá quente pra caramba!"],
+  ["saudade","Sehnsucht / vermissen","Tô com saudade de você."],
+  ["bora","los geht's (von „vamos embora“)","Bora tomar um café?"],
+  ["nossa!","wow! / Mensch!","Nossa, que lindo!"]
+];
+
+// ---------- SPEICHER ----------
+let state = JSON.parse(localStorage.getItem('pt-state') || '{}');
+state.cards = state.cards || {};
+state.score = state.score || {right:0, total:0};
+function save(){ localStorage.setItem('pt-state', JSON.stringify(state)); }
+
+// ---------- ANZEIGE ----------
+function show(tab){
+  ['vocab','gram','slang'].forEach(t=>document.getElementById('t-'+t).classList.toggle('active', t===tab));
+  ({vocab:renderVocab, gram:renderGram, slang:renderSlang})[tab]();
+}
+
+// Vokabeln mit einfachem Wiederholungsrhythmus (Leitner-System)
+function nextCard(){
+  const now = Date.now();
+  const due = VOCAB.map((v,i)=>({i, c: state.cards[i] || {box:0, due:0}})).filter(x=>x.c.due<=now);
+  if(!due.length) return null;
+  due.sort((a,b)=>a.c.box-b.c.box);
+  return due[0].i;
+}
+function speak(text){
+  const u = new SpeechSynthesisUtterance(text); u.lang='pt-BR'; u.rate=.85;
+  speechSynthesis.cancel(); speechSynthesis.speak(u);
+}
+function renderVocab(){
+  const i = nextCard(); const app = document.getElementById('app');
+  if(i===null){ app.innerHTML='<div class="card"><div class="big">🎉 Fertig für jetzt!</div><p class="hint">Alle Karten sind erledigt. Komm später wieder.</p></div>'; return; }
+  const [pt,de] = VOCAB[i];
+  app.innerHTML = `<div class="card"><p class="hint">Portugiesisch</p><div class="big">${pt}</div>
+    <button class="act" onclick="speak('${pt.replace(/'/g,"")}')">🔊 Anhören</button>
+    <div id="ans" style="min-height:60px"><button class="act" onclick="reveal(${i})">Antwort zeigen</button></div></div>
+    <div class="stat">Karten gelernt: ${Object.values(state.cards).filter(c=>c.box>=3).length} / ${VOCAB.length}</div>`;
+}
+function reveal(i){
+  document.getElementById('ans').innerHTML = `<div class="big" style="color:#002776">${VOCAB[i][1]}</div>
+    <button class="act bad" onclick="rate(${i},false)">Nicht gewusst</button>
+    <button class="act good" onclick="rate(${i},true)">Gewusst</button>`;
+}
+function rate(i, ok){
+  const c = state.cards[i] || {box:0, due:0};
+  c.box = ok ? Math.min(c.box+1,5) : 0;
+  const waits = [0, 10*60e3, 24*3600e3, 3*24*3600e3, 7*24*3600e3, 21*24*3600e3];
+  c.due = Date.now() + waits[c.box] + (ok ? 0 : 60e3);
+  state.cards[i] = c; save(); renderVocab();
+}
+
+// Grammatik-Quiz
+let gIndex = 0;
+function renderGram(){
+  const q = GRAM[gIndex % GRAM.length]; const app = document.getElementById('app');
+  app.innerHTML = `<div class="card"><p class="hint">Frage ${(gIndex%GRAM.length)+1} von ${GRAM.length}</p><div class="big" style="font-size:20px">${q.q}</div>
+    ${q.o.map((o,k)=>`<button class="opt" onclick="answer(${k},this)">${o}</button>`).join('')}
+    <p id="exp" class="hint"></p><div id="nx"></div></div>
+    <div class="stat">Richtig: ${state.score.right} von ${state.score.total}</div>`;
+}
+function answer(k, el){
+  const q = GRAM[gIndex % GRAM.length];
+  document.querySelectorAll('.opt').forEach((b,j)=>{ b.disabled=true; if(j===q.a) b.classList.add('right'); });
+  if(k!==q.a) el.classList.add('wrong');
+  state.score.total++; if(k===q.a) state.score.right++; save();
+  document.getElementById('exp').textContent = q.e;
+  document.getElementById('nx').innerHTML = '<button class="act" onclick="gIndex++;renderGram()">Weiter</button>';
+}
+
+// Slang
+function renderSlang(){
+  document.getElementById('app').innerHTML = SLANG.map(([p,d,ex])=>`<div class="card slang"><b>${p}</b> <button class="act" style="padding:4px 10px" onclick="speak('${ex.replace(/'/g,"").replace(/— /g,"")}')">🔊</button>
+    <div>${d}</div><div class="hint">${ex}</div></div>`).join('');
+}
+
+show('vocab');
+</script>
+</body>
+</html>
